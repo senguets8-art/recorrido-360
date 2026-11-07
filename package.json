@@ -1,0 +1,9 @@
+{
+ "name":"navega360-studio-cloud",
+ "version":"4.0.0",
+ "private":true,
+ "type":"module",
+ "scripts":{"check":"node --check app.js && node --check cloud.js && node --check publicador/viewer.js && node --check api/tour.js && node --check api/media-token.js && node --check api/media-url.js && node --check api/publish.js"},
+ "dependencies":{"@vercel/blob":"^2.4.0"},
+ "engines":{"node":">=20"}
+}

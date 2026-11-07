@@ -1,6 +1,4 @@
-/* Navega360 Studio · Editor estático de recorridos 360°
- * Archivos y escenas permanecen en IndexedDB. No hay servidores de carga.
- */
+/* Navega360 Studio V4 · Editor con guardado local y publicación opcional en Vercel Blob. */
 (() => {
 'use strict';
 const $ = (id) => document.getElementById(id);
@@ -32,9 +30,12 @@ function transact(store,mode,fn){return new Promise((resolve,reject)=>{const tx=
 async function saveMeta(){if(!db || syncing)return;try{await transact('config','readwrite',os=>os.put(clone(data),'tour'));status('Cambios guardados en este navegador.');}catch(err){console.error(err);status('No se pudo guardar. Exporta el ZIP como respaldo.');notify('El navegador no permitió guardar los cambios.');}}
 function scheduleSave(){status('Guardando cambios…');clearTimeout(saveTimeout);saveTimeout=setTimeout(()=>saveMeta(),450);}
 async function saveAsset(id,blob,name){await transact('assets','readwrite',os=>os.put({blob,name},id));registerAsset(id,blob,name);}
-function registerAsset(id,blob,name){const old=media.get(id);if(old)URL.revokeObjectURL(old.url);media.set(id,{blob,name,url:URL.createObjectURL(blob)});}
-async function deleteAsset(id){if(!id)return;const stillUsed=data.scenes.some(s=>s.assetId===id || s.hotspots?.some(h=>h.iconAssetId===id))||data.music?.assetId===id;if(stillUsed)return;try{await transact('assets','readwrite',os=>os.delete(id));}catch(err){console.warn(err);}if(media.get(id))URL.revokeObjectURL(media.get(id).url);media.delete(id);}
-async function restore(){db=await database();const saved=await transact('config','readonly',os=>os.get('tour'));if(saved&&Array.isArray(saved.scenes)){data=saved;data.music??=null;}const ids=new Set(data.scenes.flatMap(s=>[s.assetId,...(s.hotspots||[]).map(h=>h.iconAssetId).filter(Boolean)]).concat(data.music?.assetId||[]));for(const id of ids){const item=await transact('assets','readonly',os=>os.get(id));if(item?.blob)registerAsset(id,item.blob,item.name);}currentId=data.scenes[0]?.id||null;renderEverything();status('Cambios guardados en este navegador.');}
+function registerAsset(id,blob,name,remoteURL=''){const old=media.get(id);if(old?.blob)URL.revokeObjectURL(old.url);media.set(id,{blob,name,url:blob?URL.createObjectURL(blob):remoteURL,remoteURL});}
+async function markRemoteAsset(id,remoteURL){const a=media.get(id);if(!a)throw new Error('No se encontró un archivo para registrar.');a.remoteURL=remoteURL;await transact('assets','readwrite',os=>os.put({blob:a.blob||null,name:a.name,remoteURL},id));}
+async function registerRemoteAsset(id,remoteURL,name){await transact('assets','readwrite',os=>os.put({blob:null,name,remoteURL},id));registerAsset(id,null,name,remoteURL);}
+
+async function deleteAsset(id){if(!id)return;const stillUsed=data.scenes.some(s=>s.assetId===id || s.hotspots?.some(h=>h.iconAssetId===id))||data.music?.assetId===id;if(stillUsed)return;try{await transact('assets','readwrite',os=>os.delete(id));}catch(err){console.warn(err);}if(media.get(id)?.blob)URL.revokeObjectURL(media.get(id).url);media.delete(id);}
+async function restore(){db=await database();const saved=await transact('config','readonly',os=>os.get('tour'));if(saved&&Array.isArray(saved.scenes)){data=saved;data.music??=null;}const ids=new Set(data.scenes.flatMap(s=>[s.assetId,...(s.hotspots||[]).map(h=>h.iconAssetId).filter(Boolean)]).concat(data.music?.assetId||[]));for(const id of ids){const item=await transact('assets','readonly',os=>os.get(id));if(item?.blob||item?.remoteURL)registerAsset(id,item.blob||null,item.name,item.remoteURL||'');}currentId=data.scenes[0]?.id||null;renderEverything();status('Cambios guardados en este navegador.');}
 
 function el(tag,attrs={},content=''){const n=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k==='class')n.className=v;else if(k==='title')n.title=v;else if(k==='style')n.style.cssText=v;else n.setAttribute(k,v);}if(content)n.textContent=content;return n;}
 function getDimensions(blob){return new Promise(resolve=>{const url=URL.createObjectURL(blob);const img=new Image();img.onload=()=>{resolve({w:img.naturalWidth,h:img.naturalHeight});URL.revokeObjectURL(url)};img.onerror=()=>{resolve({w:0,h:0});URL.revokeObjectURL(url)};img.src=url;});}
@@ -208,7 +209,7 @@ async function importSite(file){
   }
   if(manifest.music?.path){const path=manifest.music.path;if(/^assets\/[a-zA-Z0-9._-]+$/.test(path)&&zip.file(path)){const fid=uid();assets.push({id:fid,blob:await zip.file(path).async('blob'),name:manifest.music.name||path.split('/').pop()});incoming.music={assetId:fid,name:manifest.music.name||path.split('/').pop()};}}
   syncing=true;const tx=db.transaction(['assets','config'],'readwrite');tx.objectStore('assets').clear();for(const a of assets)tx.objectStore('assets').put({blob:a.blob,name:a.name},a.id);tx.objectStore('config').put(clone(incoming),'tour');await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
-  for(const old of media.values())URL.revokeObjectURL(old.url);media.clear();for(const a of assets)registerAsset(a.id,a.blob,a.name);
+  for(const old of media.values())if(old.blob)URL.revokeObjectURL(old.url);media.clear();for(const a of assets)registerAsset(a.id,a.blob,a.name);
   data=incoming;currentId=data.scenes[0].id;selectedSpotId=null;activeTool=null;syncing=false;renderEverything();status('Proyecto restaurado desde el ZIP.');notify('Proyecto importado correctamente.');
  }catch(err){syncing=false;console.error(err);notify('Error al importar: '+err.message);}
 }
@@ -235,5 +236,47 @@ function setup(){
  const help=()=>$('helpModal').classList.remove('hidden');$('btnHelp').onclick=help;$('btnCloseHelp').onclick=$('btnHelpOk').onclick=()=>$('helpModal').classList.add('hidden');$('helpModal').onclick=e=>{if(e.target.id==='helpModal')$('helpModal').classList.add('hidden');};
  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('helpModal').classList.contains('hidden'))$('helpModal').classList.add('hidden');else if(!$('exportModal').classList.contains('hidden'))closeExportDialog();else if(previewVisible)closePreview();else if(activeTool){activeTool=null;updateToolUI();}}});window.addEventListener('resize',()=>{if(previewVisible){if(previewViewer)previewViewer.resize();}else if(editorViewer)editorViewer.resize();else if(getCurrent()?.type==='flat')renderSurface('editor');});
 }
+
+async function loadRemoteTour(manifest,tourId){
+ if(!manifest||!Array.isArray(manifest.scenes)||!manifest.scenes.length)throw new Error('El recorrido publicado está vacío.');
+ if(data.scenes.length&&!confirm('Se reemplazará el proyecto local actual en este navegador. ¿Continuar?'))return false;
+ const incoming=blank(),remoteAssets=[];incoming.title=String(manifest.title||'Recorrido 360°').slice(0,110);incoming.cloudId=tourId;
+ for(const s of manifest.scenes){
+  if(!isRemoteURL(s.path))throw new Error('La escena contiene una dirección no válida.');
+  const assetId=uid();remoteAssets.push({id:assetId,url:s.path,name:String(s.title||'Escena')+'.jpg'});
+  const hs=[];
+  for(const h of (Array.isArray(s.hotspots)?s.hotspots:[]).slice(0,200)){
+   let iconAssetId=null;
+   if(isRemoteURL(h.iconPath)){iconAssetId=uid();remoteAssets.push({id:iconAssetId,url:h.iconPath,name:'icono.png'});}
+   hs.push({id:h.id||uid(),kind:['info','web','link'].includes(h.kind)?h.kind:'info',label:String(h.label||'').slice(0,100),body:String(h.body||'').slice(0,1000),target:String(h.target||''),url:String(h.url||''),newTab:h.newTab!==false,iconAssetId,iconSize:iconSize(h),x:Number(h.x??50),y:Number(h.y??50),pitch:Number(h.pitch??0),yaw:Number(h.yaw??0)});
+  }
+  incoming.scenes.push({id:s.id||uid(),title:String(s.title||'Escena'),type:s.type==='360'?'360':'flat',assetId,originalName:'Fotografía en la nube',initialYaw:Number(s.initialYaw)||0,initialPitch:Number(s.initialPitch)||0,hotspots:hs});
+ }
+ if(manifest.music?.path && isRemoteURL(manifest.music.path)){
+  const assetId=uid();remoteAssets.push({id:assetId,url:manifest.music.path,name:String(manifest.music.name||'audio.mp3')});incoming.music={assetId,name:String(manifest.music.name||'Música')};
+ }
+ syncing=true;
+ try{
+  const tx=db.transaction(['assets','config'],'readwrite');tx.objectStore('assets').clear();
+  for(const a of remoteAssets)tx.objectStore('assets').put({blob:null,name:a.name,remoteURL:a.url},a.id);
+  tx.objectStore('config').put(clone(incoming),'tour');
+  await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
+  for(const old of media.values())if(old.blob)URL.revokeObjectURL(old.url);media.clear();
+  for(const a of remoteAssets)registerAsset(a.id,null,a.name,a.url);
+  data=incoming;currentId=data.scenes[0].id;selectedSpotId=null;activeTool=null;closePreviewIfOpen();renderEverything();status('Recorrido recuperado desde la nube.');notify('Recorrido publicado cargado.');return true;
+ } finally{syncing=false;}
+}
+function isRemoteURL(value){try{return new URL(value).protocol==='https:';}catch{return false;}}
+function closePreviewIfOpen(){if(previewVisible)closePreview();}
+window.NavegaCloudHooks={
+ getData:()=>data,
+ getMedia:(id)=>media.get(id),
+ markRemoteAsset,
+ loadRemoteTour,
+ setCloudId:(id)=>{data.cloudId=id;scheduleSave();},
+ notify,
+ saveNow:()=>saveMeta()
+};
+
 setup();restore().catch(err=>{console.error(err);status('No hay guardado disponible. Exporta el ZIP periódicamente.');notify('No se pudo iniciar el almacenamiento local. Comprueba los permisos del navegador.');renderEverything();});
 })();

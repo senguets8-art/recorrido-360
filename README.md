@@ -1,93 +1,60 @@
-# Navega360 Studio · V3 · Exportación optimizada
+# Navega360 Studio V4 · Editor y visor en el mismo sitio
 
-Editor visual de recorridos virtuales 360°, listo para sitios estáticos en GitHub + Vercel. **No es una copia de Kuula, sino un editor propio de recorridos virtuales con funciones similares.**
+## ¿Qué cambia respecto a V3?
 
-## Funcionalidades
+**Ya NO necesitas exportar un ZIP ni subir fotografías a GitHub.** Se publica directamente desde el editor en Vercel y el enlace de visita abre un **visor sin herramientas de edición**.
 
-- Agregar muchas imágenes JPG, PNG o WEBP de una vez, o arrastrarlas al editor.
-- Detectar panorámicas equirectangulares aproximadamente 2:1. Al agregar una colección nueva, la **primera y la última imagen** se establecen como fotografía normal; su tipo se puede cambiar manualmente.
-- Cambiar el orden de las escenas y renombrarlas.
-- Colocar *hotspots* de navegación entre escenas, enlaces a páginas externas (Facebook, Google Maps, etc.) o información en panorámicas 360° y fotos normales. Para mover un punto, selecciónalo y pulsa **Reubicar en la imagen**; después haz clic en la ubicación deseada.
-- Asignar destinos entre las escenas o pegar URL externas HTTPS/HTTP; opción de abrir en pestaña nueva.
-- Personalizar **cada hotspot** con tu propia imagen PNG, JPG, WEBP, GIF o AVIF (hasta 8 MB), ajustar el tamaño y volver al ícono original. Las imágenes se guardan en el navegador, viajan en el ZIP y se restauran al importarlo.
-- Guardar la orientación inicial de cada panorámica.
-- Música de fondo, en bucle, activada por el visitante (los navegadores impiden reproducir audio con sonido automáticamente antes de una interacción).
-- Vista previa de visitante, navegación anterior/siguiente y puntos interactivos.
-- Guardado automático en el **almacenamiento local del navegador (IndexedDB)**.
-- Exportación de un sitio web completo ZIP con fotografías, música, `tour.json` y un visor de visitantes. **V3: exportación automática optimizada para GitHub, con límite preventivo de 22 MiB por archivo.**
-- Importación del mismo ZIP para editar de nuevo y conservar un respaldo.
+- Editor: `https://TU-PROYECTO.vercel.app/`.
+- Enlace para visitantes: `https://TU-PROYECTO.vercel.app/ver/identificador-de-tu-recorrido`.
+- Cambias hotspots o escenas → pulsa **☁ Publicar enlace → Guardar y actualizar recorrido en línea**. El enlace no cambia.
+- El editor tiene contraseña **para publicar y sobrescribir** recorridos. El código del editor es público, pero la nube **no acepta escrituras sin la contraseña**.
+- Los visitantes pueden recorrer las escenas, activar música, pulsar los hotspots con iconos personalizados y abrir Facebook/Google Maps, pero **no pueden modificar el recorrido desde el visor**.
 
-## Inicio inmediato (Windows)
+## Configurar GitHub y Vercel (solo una vez)
 
-1. Descomprime `Navega360-Studio.zip`.
-2. Si tienes **Python 3** instalado, ejecuta `INICIAR-EN-WINDOWS.bat` y abre `http://localhost:8000`.
-3. Como alternativa, publica la carpeta del editor mediante GitHub y Vercel. Abre la dirección pública del editor. El navegador debe tener conexión a Internet para cargar **Pannellum** desde el CDN.
-4. **Subir fotografías** → organiza → **Escena**, **Sitio web** o **Información** → clic en la fotografía para colocar el punto → configura el destino o la descripción a la derecha.
-5. **Música de fondo** → sube el archivo de audio. **Vista previa** → prueba el recorrido.
-6. **Exportar sitio web** → marca **Optimizar fotografías**, elige resolución (4096 px recomendada) y pulsa **Preparar ZIP para GitHub**. El ZIP sirve también como **respaldo editable de las imágenes exportadas**. Mantén aparte el ZIP de tus originales o las fotos originales si quieres conservar máxima resolución.
+1. Conserva tu proyecto V3 y su URL para evitar perder datos. **Haz un respaldo** antes de actualizar; en V3 selecciona *Exportar sitio web* si funciona o conserva las fotografías originales y sus hotspots en el mismo navegador. Al actualizar el proyecto bajo el **mismo dominio** Vercel, V4 lee automáticamente su guardado local V3 (IndexedDB).
+2. Abre el ZIP de V4 y **descomprímelo**. Sube **solo el código** al repositorio de GitHub vinculado a Vercel. Usa estos archivos del proyecto: `index.html`, `app.js`, `cloud.js`, `style.css`, `publicador/`, `api/`, `lib/`, `vendor/`, `package.json`, `vercel.json` y `README.md`. No subas fotografías ni la música.
+3. En Vercel selecciona ese repositorio (o actualiza la implementación existente), **Framework Preset: Other**. Este proyecto ya no es meramente estático: utiliza funciones de Vercel y el paquete de Node `@vercel/blob`. Vercel debe instalar automáticamente la dependencia de `package.json`.
+4. En el panel de Vercel, abre **Storage** → crea y conecta un almacenamiento **Blob público (Public)** al proyecto. El visor necesita imágenes accesibles por su URL. En configuraciones modernas Vercel puede habilitar autenticación OIDC automáticamente; V4 utiliza URLs firmadas y admite esta opción. No publiques secretos en GitHub.
+5. En **Settings → Environment Variables**, agrega `NAVEGA_ADMIN_PASSWORD` con una contraseña fuerte de **mínimo 16 caracteres**. Selecciona **Production** y también Preview si vas a probar en entornos de prueba. **Nunca escribas esta contraseña en ningún archivo del repositorio.**
+6. Después de crear Blob y la variable de entorno, **redeploy/redeploy** del proyecto para que las funciones obtengan la configuración.
+7. Abre la dirección de Vercel del **editor**, desde el mismo navegador y dominio de V3. Verifica que tu recorrido siga cargado. Si usas otro navegador o dominio, la copia local no estará allí: carga tu respaldo ZIP (si lo tienes) o **Cargar publicado** si ya lo subiste en V4.
+8. Pulsa **☁ Publicar enlace**, introduce la contraseña que configuraste, pulsa **Guardar y actualizar recorrido en línea** y espera el mensaje **«✓ Recorrido publicado»**. Copia el enlace del cuadro, envíalo a tus visitantes.
 
-> **Importante:** Si cierras el navegador, el proyecto normalmente sigue allí en el mismo navegador y equipo. No borres los datos del sitio, no dependas únicamente del guardado local y conserva el ZIP. Las fotografías no se almacenan automáticamente en GitHub o Vercel al subirlas al editor.
+## Editar después de publicar
 
-## Publicar el EDITOR en GitHub y Vercel
+Conserva el mismo navegador y los datos del sitio para mantener el proyecto editable. Si editas desde otro equipo, usa el botón **«Cargar publicado»** con el enlace público, acepta reemplazar el proyecto local e introduce la contraseña solo al volver a publicar. Los archivos ya almacenados en la nube se reutilizan si no los cambias.
 
-1. En GitHub crea un nuevo repositorio, por ejemplo `navega360-studio`.
-2. Sube al repositorio los archivos de esta carpeta, incluyendo `index.html`, `app.js`, `style.css`, `vendor/`, `publicador/` y `vercel.json`.
-3. Abre [vercel.com](https://vercel.com/), crea un nuevo proyecto e importa ese repositorio.
-4. Usa **Framework Preset: Other** y deja vacío el **Build Command** (no requiere Node ni paquetes npm). Directorio de salida: raíz del proyecto (`.`), si te pide uno.
-5. Vercel te dará una URL para abrir el editor desde cualquier equipo, aunque cada navegador manejará sus propios archivos locales.
+## Cuestiones importantes
 
-## Publicar cada RECORRIDO terminado
-
-1. Desde el editor, selecciona **Exportar sitio web**.
-2. Descomprime el ZIP de salida. Verás `index.html`, `viewer.js`, `viewer.css`, `tour.json`, `assets/` y `vercel.json`.
-3. Crea **otro repositorio** GitHub, por ejemplo `recorrido-teatro`.
-4. Sube **los archivos descomprimidos a la raíz** de ese repositorio (no subas solo el ZIP).
-5. Importa el segundo repositorio en Vercel como **sitio estático** (Framework: Other; sin compilación).
-6. Comparte el enlace público que Vercel te entregue.
-7. Cuando necesites editar, usa **Importar proyecto** en el editor con el ZIP respaldado, edita y vuelve a subir al repositorio del recorrido los archivos extraídos del nuevo ZIP.
-
-> Si tienes muchas fotos o son muy grandes, el ZIP puede superar los límites de subida web de GitHub. Conviene optimizar las panorámicas JPG a 4096–8192 píxeles de ancho y un peso razonable por archivo. Pannellum recomienda 4096 px para amplia compatibilidad. Las fotografías 360° deben ser **equirectangulares**; una foto normal no se convierte en 360° al cambiar el selector.
-
-## Limitaciones de esta versión
-
-- Es una herramienta estática. **No incluye cuentas, editor colaborativo, subida directa a GitHub/Vercel ni base de datos remota**. La publicación requiere exportar y subir los archivos.
-- No cuenta con funciones avanzadas de Kuula como estadísticas, mapas, planos, analíticas, alojamiento de medios, control multiusuario o recorridos VR con casco.
-- El editor y el recorrido publicado usan Pannellum 2.5.7 mediante CDN externo, por lo que requieren Internet para ver imágenes panorámicas. Las fotografías normales funcionan sin ese recurso.
-- Audio con copyright: usa música original, libre de derechos o con licencia apropiada para su publicación.
+- El guardado de escenas y hotspots mientras editas **sigue siendo local** y automático. Solo se sincroniza al pulsar «Guardar y actualizar recorrido en línea». Un editor colaborativo, ediciones simultáneas, versionado y cuentas individuales **aún no están implementados**.
+- Los archivos multimedia se transfieren **directamente del navegador a Vercel Blob** con URL firmada por el servidor. La contraseña no se envía a Blob y **no** se introduce en un enlace compartido. El tamaño máximo de cada archivo en esta versión es de **250 MiB**, sujeto a límites de almacenamiento/cuenta/navegador. Para archivos muy grandes, es recomendable comprimir las fotos 360° antes de subirlas.
+- **Vercel Blob tiene cuotas de uso y puede generar cargos** por almacenamiento, operaciones y descargas. Consulta la información de precios de tu cuenta en Vercel.
+- **Blob público significa que las fotografías, música e iconos pueden ser descargados por cualquier persona que tenga su dirección pública**. El visor es de solo lectura; eso no impide guardar/copiar archivos vistos. No uses este modo para información confidencial.
+- Los recorridos se guardan como manifiestos JSON con nombre de archivo nuevo cada publicación para evitar servir una versión anterior por caché. En cada visita se consulta el manifiesto más reciente del recorrido, lo que implica una operación de listado de Blob; es adecuado para proyectos pequeños, pero para tráfico alto convendría una base de datos o un índice de publicaciones.
+- Si publicas con el mismo identificador desde otro navegador se reemplaza la **versión más reciente** visible, no las fotos originales. Los medios anteriores no se borran automáticamente; revisa Storage periódicamente.
+- Los enlaces externos de hotspots admiten HTTP y HTTPS; el visor no ejecuta código de los enlaces.
+- La música depende de la interacción del visitante; los navegadores suelen bloquear sonido automático.
+- Pannellum 2.5.7 se carga desde el CDN de jsDelivr, requiere Internet.
+- Usa música propia o con licencia apropiada para publicación.
 
 ## Estructura
 
-- `index.html`, `style.css`, `app.js`: editor.
-- `vendor/jszip.min.js`: biblioteca JSZip para exportar/importar ZIP.
-- `publicador/index.html`, `publicador/viewer.css`, `publicador/viewer.js`: plantilla pública incluida en cada exportación.
-- `vercel.json`: configuración de sitio estático.
-- `INICIAR-EN-WINDOWS.bat`: arranque local opcional mediante Python 3.
+`app.js`, `index.html`, `style.css`: editor original V3 compatible.
 
-## Atribuciones
+`cloud.js`: botones, subida directa a Blob, publicación e importación de recorridos de la nube.
 
-- **Pannellum** © Matthew Petroff y colaboradores, licencia MIT, [pannellum.org](https://pannellum.org/).
-- **JSZip** © Stuart Knightley y colaboradores, licencia MIT/GPLv3; se distribuye con su archivo de licencia en `vendor/LICENCIA-JSZIP.md`.
+`api/media-token.js`: autoriza cada subida y crea una URL temporal firmada. `api/media-url.js`: confirma el archivo y obtiene su URL. `api/publish.js`: escribe el manifiesto público tras verificar contraseña. `api/tour.js`: obtiene el recorrido público más reciente.
 
-## Hotspots: URL e imágenes personalizadas
+`lib/shared.js`: autenticación y validaciones comunes del servidor.
 
-1. Selecciona una escena normal o 360° y pulsa **Sitio web** para crear un hotspot que abra una página externa; después, haz clic sobre la imagen para situarlo.
-2. En **Propiedades** agrega el nombre y pega un enlace como `https://www.facebook.com/` o `https://maps.google.com/`. Por defecto se abrirá en una pestaña nueva.
-3. En **Imagen del hotspot** pulsa **Subir imagen** y selecciona un archivo PNG, JPG, WEBP, GIF o AVIF. Ajusta el tamaño con el control deslizante. Si no quieres la imagen, pulsa **Usar ícono original**.
-4. Puedes cambiar el **tipo de acción** de un punto ya creado: escena, sitio web o información.
-5. Usa **Vista previa** para probarlo y **Exportar sitio web** para llevarte imágenes y enlaces en el ZIP. Al importar ese ZIP, los íconos siguen siendo editables.
+`publicador/`: visor público sin controles de edición.
 
-**Seguridad:** se admiten únicamente direcciones HTTP o HTTPS. Los íconos SVG no se admiten, para evitar archivos activos. Los sitios externos pueden solicitar inicio de sesión o restringir la visualización en determinadas plataformas; el enlace se abre directamente en el navegador, no dentro del panorama.
+`package.json`: dependencia de Vercel Blob.
 
+## Referencias oficiales
 
-## Versión 3: solución al aviso de archivo demasiado grande en GitHub
-
-GitHub desde el navegador permite **25 MiB por archivo**, NO por todo el recorrido.
-
-1. **Actualiza primero el repositorio del editor**, conservando los datos del sitio en el mismo navegador y dominio. Si cambias el dominio, importa tu ZIP anterior.
-2. Pulsa **Exportar sitio web → Optimizar automáticamente las fotografías** (activado por defecto) → **4096 píxeles** → **Preparar ZIP para GitHub**. La optimización ocurre **solo en el ZIP**, sin cambiar las fotografías originales del editor.
-3. Si una panorámica es demasiado grande, el exportador la reduce y la convierte en JPG; los puntos y orientaciones se mantienen. Si la imagen ya es ligera, suele conservarse. **Al reducir una imagen PNG grande puede perderse transparencia.**
-4. Si la música supera 22 MiB, el exportador la identifica y te pide que la reemplaces por una versión más ligera; no altera el audio de forma automática.
-5. **Descomprime** el ZIP generado y **sube los archivos extraídos**, NO el ZIP, al repositorio del recorrido. El archivo `LEEME-PUBLICAR.txt` incluye el inventario de tamaños.
-6. Si el total de las fotografías es enorme, optimizar cada archivo puede seguir sin ser suficiente para algunos límites de despliegue de Vercel. En ese caso conviene alojar las imágenes en un servicio de almacenamiento especializado.
-
-**No se necesita volver a marcar hotspots.** Se mantienen enlaces, etiquetas, coordenadas, íconos personalizados, escenas y música. La importación de ZIP V2 sigue admitida.
+- [Vercel Blob · documentación](https://vercel.com/docs/vercel-blob)
+- [Firmar direcciones Blob](https://vercel.com/changelog/signed-urls-are-now-available-for-vercel-blob)
+- [Seguridad de Blob](https://vercel.com/docs/vercel-blob/security)
+- [Consumo y costos](https://vercel.com/docs/vercel-blob/usage-and-pricing)

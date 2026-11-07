@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b1526">
-  <title>Navega360 Studio · Editor de recorridos virtuales</title>
+  <title>Navega360 Studio V4 · Publicación directa en la nube</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.css">
   <link rel="stylesheet" href="./style.css">
@@ -17,7 +17,7 @@
       <div class="top-actions">
         <button class="btn subtle" id="btnImport" title="Importar un ZIP exportado anteriormente">↥ <span>Importar proyecto</span></button>
         <button class="btn subtle" id="btnPreview">◉ <span>Vista previa</span></button>
-        <button class="btn primary" id="btnExport">↧ <span>Exportar sitio web</span></button>
+        <button class="btn primary" id="btnCloud">☁ <span>Publicar enlace</span></button><button class="btn subtle" id="btnCloudOpen">↥ <span>Cargar publicado</span></button><button class="btn subtle" id="btnExport" title="Respaldo ZIP opcional">↧ <span>ZIP</span></button>
       </div>
     </header>
     <div class="workspace">
@@ -83,6 +83,19 @@
     <p class="export-warning"><strong>Recuerda:</strong> descomprime el ZIP y sube los archivos y la carpeta <code>assets/</code> a GitHub. No subas el ZIP completo.</p>
   </div></div>
   <div id="helpModal" class="modal-backdrop hidden"><div class="modal"><button class="modal-close" id="btnCloseHelp">✕</button><span class="eyebrow">PUBLICAR EN INTERNET</span><h2>De tu computadora a un recorrido compartible</h2><p>El botón <b>Exportar sitio web</b> permite optimizar automáticamente las fotografías y genera un ZIP con el recorrido terminado, música, hotspots con enlaces externos e imágenes personalizadas.</p><ol><li>Descomprime el ZIP en tu computadora.</li><li>En <b>GitHub</b>, crea un repositorio nuevo y sube <b>todos los archivos descomprimidos</b> (no el ZIP).</li><li>En <b>Vercel</b>, selecciona <b>Add New → Project</b>, importa el repositorio y publícalo como sitio estático (Framework: Other; sin comando de compilación).</li><li>Comparte el enlace que te dé Vercel. Para realizar cambios, importa el ZIP de vuelta a este editor, modifícalo y exporta nuevamente.</li></ol><p class="modal-note">El proyecto se guarda en el navegador de este dispositivo. Conserva también tu ZIP como respaldo. No se suben tus fotos a ningún servidor al editarlas.</p><button class="btn primary" id="btnHelpOk">Entendido</button></div></div>
+
+  <div id="cloudModal" class="modal-backdrop hidden" aria-hidden="true"><div class="modal cloud-modal">
+    <button class="modal-close" id="cloudClose" title="Cerrar">✕</button>
+    <span class="eyebrow">PUBLICACIÓN EN LA NUBE · V4</span><h2>Compartir recorrido sin exportar archivos</h2>
+    <p>Las fotos, los íconos y la música se suben a <strong>Vercel Blob</strong>. GitHub solo guarda el código del editor. Los visitantes recibirán un enlace para <strong>ver, no editar</strong>.</p>
+    <div class="field"><label for="cloudPassword">Contraseña privada del editor (configurada en Vercel)</label><input id="cloudPassword" type="password" autocomplete="off" placeholder="Contraseña de publicación"></div>
+    <div class="field"><label for="cloudCode">Identificador del recorrido (se crea automáticamente)</label><input id="cloudCode" type="text" readonly></div>
+    <div id="cloudStatus" class="cloud-status" role="status" aria-live="polite">No has publicado este recorrido.</div>
+    <button id="cloudPublish" class="btn primary block">☁ Guardar y actualizar recorrido en línea</button>
+    <div id="cloudResult" class="hidden"><div class="field"><label for="cloudLink">Enlace de visualización (solo lectura)</label><input id="cloudLink" readonly></div><div class="cloud-actions"><button class="btn compact" id="cloudCopy">Copiar enlace</button><a class="btn compact" id="cloudVisit" target="_blank" rel="noopener noreferrer">Abrir como visitante</a></div></div>
+    <p class="modal-note">Las modificaciones locales no se ven en el enlace hasta pulsar <b>Guardar y actualizar</b>. El audio se inicia cuando el visitante lo autoriza. El enlace es público para cualquier persona que lo tenga.</p>
+  </div></div>
+  <div id="cloudLoadModal" class="modal-backdrop hidden"><div class="modal cloud-modal"><button class="modal-close" id="cloudLoadClose">✕</button><span class="eyebrow">RECUPERAR DESDE LA NUBE</span><h2>Abrir un recorrido publicado para editarlo</h2><p>Pega el enlace de visualización o el identificador del recorrido. Se restaurarán las escenas y hotspots en este navegador.</p><div class="field"><label for="cloudLoadInput">Enlace público o identificador</label><input id="cloudLoadInput" placeholder="https://mi-sitio.vercel.app/ver/..." autocomplete="off"></div><div id="cloudLoadStatus" role="status"></div><button class="btn primary block" id="cloudLoadAction">Cargar recorrido publicado</button></div></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp,image/avif" multiple hidden>
   <input type="file" id="musicInput" accept="audio/*,.mp3,.m4a,.ogg,.wav" hidden>
@@ -91,5 +104,6 @@
   <script src="./vendor/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.js"></script>
   <script src="./app.js" defer></script>
+  <script src="./cloud.js" defer></script>
 </body>
 </html>

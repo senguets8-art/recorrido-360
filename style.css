@@ -8,3 +8,6 @@
 
 /* V3 · Asistente de exportación para GitHub */
 .export-modal{width:min(560px,95vw)}.export-modal .field{margin:14px 0}.export-modal .checkbox-label{font-size:13px!important;color:#263c57}.export-modal .export-toggle{background:#f1f8fd;border:1px solid #d9eafa;border-radius:9px;padding:13px}.export-modal .export-help{font-size:11px;color:#678199}.export-result{padding:13px;border-radius:10px;background:#f2f9f6;color:#206849;border:1px solid #bde3cf;font-size:12px;line-height:1.6;margin:14px 0;overflow-wrap:anywhere}.export-modal .export-warning{font-size:11px;color:#667992}.export-modal code{background:#ecf1f7;padding:2px 4px;border-radius:4px}.export-modal .btn.block{margin-top:14px}
+
+/* V4 · Cloud publishing */
+.cloud-modal{max-height:90vh;overflow-y:auto}.cloud-status{padding:14px 16px;border-radius:12px;background:#132b42;color:#cce1ff;font-size:14px;white-space:pre-wrap;margin:12px 0}.cloud-actions{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 12px}.cloud-actions a{display:inline-flex;align-items:center;text-decoration:none}.cloud-modal input[readonly]{font-size:13px}.top-actions{gap:7px;flex-wrap:wrap}
