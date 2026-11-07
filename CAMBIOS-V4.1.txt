@@ -1,0 +1,10 @@
+NAVEGA360 V4.1 · CORRECCION 404
+
+1. vercel.json: eliminado el conflicto entre cleanUrls y reescritura HTML.
+2. cloud.js: enlace publico directo, sin depender de rewrites.
+3. cloud.js: enlace visible solo despues de publicar correctamente.
+4. api/publish.js: API devuelve enlace directo al visor.
+5. Compatibilidad: enlaces antiguos /ver/ID siguen funcionando.
+
+PARA ACTUALIZAR: subir los archivos descomprimidos a GitHub, en la raiz del proyecto.
+No subir este ZIP sin descomprimir. No borrar recursos de Vercel Blob.

@@ -1,1 +1,10 @@
-{ "version": 2, "cleanUrls": true, "rewrites": [{"source":"/ver/:tour","destination":"/publicador/index.html"}] }
+{
+  "version": 2,
+  "cleanUrls": false,
+  "rewrites": [
+    {
+      "source": "/ver/:tour",
+      "destination": "/publicador/index.html"
+    }
+  ]
+}

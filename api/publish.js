@@ -17,6 +17,6 @@ export default async function handler(req,res){
   const tour=cleanTour(body.tour);
   const name=`tours/${id}/snapshots/${Date.now()}-${randomUUID()}.json`;
   await put(name,JSON.stringify(tour),{access:'public',contentType:'application/json',addRandomSuffix:false});
-  return json(res,200,{id,viewerUrl:`/ver/${id}`,publishedAt:tour.publishedAt});
+  return json(res,200,{id,viewerUrl:`/publicador/index.html?tour=${encodeURIComponent(id)}`,publishedAt:tour.publishedAt});
  }catch(e){if(String(e.message).includes('Se requieren')||String(e.message).includes('Falta una fotografía'))return json(res,400,{error:e.message});return failure(res,e);}
 }

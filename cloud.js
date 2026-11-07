@@ -11,10 +11,10 @@ function code(){
  const next=slug(data.title)+'-'+crypto.randomUUID().slice(0,8);
  hooks.setCloudId(next);return next;
 }
-function visitUrl(id){return location.origin+'/ver/'+id;}
+function visitUrl(id){return location.origin+'/publicador/index.html?tour='+encodeURIComponent(id);}
 function status(message){$('cloudStatus').textContent=message;}
 function safeShow(target,show){$(target).classList.toggle('hidden',!show);}
-function openPublish(){const id=code();$('cloudCode').value=id;safeShow('cloudModal',true);$('cloudModal').setAttribute('aria-hidden','false');$('cloudLink').value=visitUrl(id);$('cloudVisit').href=visitUrl(id);safeShow('cloudResult',true);status('Pulsa «Guardar y actualizar» para subir o actualizar este recorrido. El enlace será válido después de la primera publicación.');}
+function openPublish(){const id=code();$('cloudCode').value=id;safeShow('cloudModal',true);$('cloudModal').setAttribute('aria-hidden','false');safeShow('cloudResult',false);$('cloudLink').value='';$('cloudVisit').removeAttribute('href');status('Pulsa «Guardar y actualizar» para subir o actualizar el recorrido. El enlace para visitantes solo aparecerá cuando Vercel confirme la publicación.');}
 function closePublish(){if(busy)return;safeShow('cloudModal',false);$('cloudModal').setAttribute('aria-hidden','true');$('cloudPassword').value='';}
 async function api(endpoint,body,password){const response=await fetch('/api/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json','x-navega-password':password},body:JSON.stringify(body)});const json=await response.json().catch(()=>({error:'Respuesta inesperada del servidor.'}));if(!response.ok)throw new Error(json.error||'No se pudo conectar con Vercel.');return json;}
 function extFor(blob,name){
