@@ -1,0 +1,12 @@
+NAVEGA360 STUDIO V3 · EXPORTACIÓN OPTIMIZADA
+
+- Nuevo asistente de exportación para GitHub.
+- Optimización automática de fotografías JPG/PNG/WEBP/AVIF al exportar; resoluciones 4096, 6144 u 8192.
+- Reducción automática de imágenes demasiado grandes con límite preventivo de 22 MiB por archivo.
+- Detección de música/íconos demasiado grandes con ruta y tamaño, para corregir antes de publicar.
+- Conserva coordenadas, destinos, hotspots externos, íconos, música y escenas.
+- Conserva archivos originales en el editor; el ZIP contiene fotografías publicables que pueden estar optimizadas.
+- Incluye lista de tamaños y pasos para GitHub/Vercel en LEEME-PUBLICAR.txt.
+
+IMPORTANTE: Descomprime el ZIP y sube todos los archivos y la carpeta assets/; no subas el ZIP al repositorio.
+Si el navegador no puede procesar una imagen enorme, será necesario reducirla antes de subirla al editor.

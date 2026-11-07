@@ -73,18 +73,77 @@ function stopAudio(){if(audio){audio.pause();audio.src='';audio=null;}}
 function toggleAudio(){const music=data.music;if(!music){notify('No hay música cargada.');return;}if(!audio){audio=new Audio(imageURL(music.assetId));audio.loop=true;audio.volume=.55;}if(audio.paused){audio.play().then(()=>{$('previewMusic').textContent='♫ Pausar música';}).catch(()=>notify('El navegador no permitió reproducir este audio.'));}else{audio.pause();$('previewMusic').textContent='♫ Reproducir música';}}
 function openPreview(){if(!data.scenes.length){notify('Primero agrega fotografías.');return;}previewVisible=true;previewIndex=Math.max(0,data.scenes.findIndex(s=>s.id===currentId));destroyViewer('editor');$('preview').classList.remove('hidden');$('preview').setAttribute('aria-hidden','false');$('previewMusic').classList.toggle('hidden',!data.music);$('previewMusic').textContent='♫ Reproducir música';renderSurface('preview');}
 function closePreview(){previewVisible=false;stopAudio();$('preview').classList.add('hidden');$('preview').setAttribute('aria-hidden','true');$('preview').querySelectorAll('.visitor-overlay').forEach(e=>e.remove());destroyViewer('preview');renderSurface('editor');}
+const WEB_FILE_LIMIT = 22 * 1024 * 1024; // Margen de seguridad bajo el límite GitHub web de 25 MiB.
+function asMiB(bytes){return (bytes/(1024*1024)).toFixed(2)+' MiB';}
+function showExportDialog(){
+ if(!data.scenes.length){notify('Agrega al menos una escena antes de exportar.');return;}
+ $('exportResult').classList.add('hidden');$('exportResult').replaceChildren();
+ $('exportModal').classList.remove('hidden');$('exportModal').setAttribute('aria-hidden','false');
+}
+function closeExportDialog(){if($('btnConfirmExport').disabled)return;$('exportModal').classList.add('hidden');$('exportModal').setAttribute('aria-hidden','true');}
+function imageFromBlob(blob){return new Promise((resolve,reject)=>{
+ const url=URL.createObjectURL(blob),img=new Image();
+ img.onload=()=>{URL.revokeObjectURL(url);resolve(img);};
+ img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('No se pudo abrir la fotografía para optimizarla.'));};
+ img.src=url;
+});}
+function canvasJpeg(canvas,quality){return new Promise((resolve,reject)=>canvas.toBlob(b=>{
+ if(b && b.type==='image/jpeg')resolve(b);else reject(new Error('Este navegador no pudo generar el JPG optimizado.'));
+},'image/jpeg',quality));}
+async function optimizeSceneImage(original,options){
+ if(!options.optimize)return {blob:original,changed:false};
+ // No modificar PNG pequeños y de tamaño adecuado para conservar transparencia.
+ const img=await imageFromBlob(original);
+ if(!img.naturalWidth||!img.naturalHeight)throw new Error('Dimensiones inválidas.');
+ const noResize=img.naturalWidth<=options.width;
+ if(noResize && original.size<=WEB_FILE_LIMIT)return {blob:original,changed:false};
+ let maxWidth=Math.min(options.width,img.naturalWidth),quality=options.quality;
+ let result=null;
+ for(let attempt=0;attempt<8;attempt++){
+  const width=Math.max(512,Math.min(img.naturalWidth,Math.round(maxWidth)));
+  const height=Math.max(1,Math.round(img.naturalHeight*width/img.naturalWidth));
+  const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+  const context=canvas.getContext('2d',{alpha:false});
+  if(!context)throw new Error('Sin memoria suficiente para convertir las fotografías.');
+  context.fillStyle='#ffffff';context.fillRect(0,0,width,height);
+  context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
+  context.drawImage(img,0,0,width,height);
+  result=await canvasJpeg(canvas,quality);
+  canvas.width=1;canvas.height=1;
+  if(result.size<=WEB_FILE_LIMIT)break;
+  maxWidth*=0.77;quality=Math.max(0.60,quality-0.045);
+ }
+ if(!result||result.size>WEB_FILE_LIMIT)throw new Error('No se pudo reducir una foto bajo 22 MiB. Prueba la resolución 4096.');
+ // Evita aumentar el peso de fotos originales que ya eran válidas.
+ if(original.size<result.size && original.size<=WEB_FILE_LIMIT)return {blob:original,changed:false};
+ return {blob:result,changed:true};
+}
 async function exportSite(){
  if(!data.scenes.length){notify('Agrega al menos una escena antes de exportar.');return;}
  if(!window.JSZip){notify('No está disponible el exportador ZIP.');return;}
- const btn=$('btnExport'),original=btn.innerHTML;btn.disabled=true;btn.textContent='Preparando ZIP…';
+ const options={optimize:$('exportOptimize').checked,width:Number($('exportMaxWidth').value),quality:Number($('exportQuality').value)};
+ const btn=$('btnConfirmExport'),original=btn.textContent;btn.disabled=true;
+ const resultNode=$('exportResult');resultNode.classList.remove('hidden');resultNode.textContent='Preparando archivos…';
  try{
-  const zip=new JSZip(),manifest={version:2,title:data.title||'Recorrido virtual',scenes:[],music:null,createdAt:new Date().toISOString()};
+  const zip=new JSZip(),manifest={version:3,title:data.title||'Recorrido virtual',scenes:[],music:null,createdAt:new Date().toISOString()};
+  let originalSize=0,publishedSize=0,optimizedCount=0;
+  const report=[];
+  function appendFile(path,blob){
+   if(blob.size>WEB_FILE_LIMIT)throw new Error(`Archivo demasiado grande para subir desde GitHub web: ${path} (${asMiB(blob.size)}). Cambia o comprime este archivo.`);
+   zip.file(path,blob);publishedSize+=blob.size;report.push({path,size:blob.size});
+  }
   for(let i=0;i<data.scenes.length;i++){
    const s=data.scenes[i],file=asset(s.assetId);if(!file)throw new Error(`Falta la fotografía de ${s.title}.`);
-   const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
+   btn.textContent=`Optimizando foto ${i+1} de ${data.scenes.length}…`;
+   originalSize+=file.blob.size;
+   let chosen;
+   try{chosen=await optimizeSceneImage(file.blob,options);}catch(err){throw new Error(`Escena «${s.title}»: ${err.message}`);}
+   let ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
+   if(chosen.changed)ext='jpg';
    const safeExt=['jpg','jpeg','png','webp','avif'].includes(ext)?ext:'jpg';
    const path=`assets/escena-${String(i+1).padStart(2,'0')}-${slug(s.title)}.${safeExt}`;
-   zip.file(path,file.blob);
+   appendFile(path,chosen.blob);
+   if(chosen.changed)optimizedCount++;
    const hotspots=[];
    for(let j=0;j<(s.hotspots||[]).length;j++){
     const h=s.hotspots[j],out={...h};delete out.iconAssetId;
@@ -94,19 +153,33 @@ async function exportSite(){
      const ext=icon.name.split('.').pop().toLowerCase();
      if(!['jpg','jpeg','png','webp','gif','avif'].includes(ext))throw new Error('Formato de ícono no admitido.');
      const iconPath=`assets/hotspot-${String(i+1).padStart(2,'0')}-${String(j+1).padStart(2,'0')}.${ext}`;
-     zip.file(iconPath,icon.blob);out.iconPath=iconPath;
+     appendFile(iconPath,icon.blob);out.iconPath=iconPath;
     }
     hotspots.push(out);
    }
    manifest.scenes.push({id:s.id,title:s.title,type:s.type,path,initialYaw:s.initialYaw||0,initialPitch:s.initialPitch||0,hotspots});
   }
-  if(data.music){const file=asset(data.music.assetId);if(file){const ext=(file.name.split('.').pop()||'mp3').toLowerCase().replace(/[^a-z0-9]/g,'');const path=`assets/musica.${['mp3','m4a','ogg','wav','aac'].includes(ext)?ext:'mp3'}`;zip.file(path,file.blob);manifest.music={path,name:file.name};}}
+  if(data.music){const file=asset(data.music.assetId);if(file){const ext=(file.name.split('.').pop()||'mp3').toLowerCase().replace(/[^a-z0-9]/g,'');const path=`assets/musica.${['mp3','m4a','ogg','wav','aac'].includes(ext)?ext:'mp3'}`;appendFile(path,file.blob);manifest.music={path,name:file.name};}}
   for(const name of ['index.html','viewer.css','viewer.js']){const response=await fetch('./publicador/'+name);if(!response.ok)throw new Error('No se pudo cargar la plantilla '+name);zip.file(name,await response.text());}
   zip.file('tour.json',JSON.stringify(manifest,null,2));zip.file('vercel.json',JSON.stringify({version:2,cleanUrls:true},null,2));
-  zip.file('LEEME-PUBLICAR.txt','NAVEGA360 · TU RECORRIDO VIRTUAL\n\n1. Descomprime este archivo ZIP.\n2. Sube TODOS los archivos y carpetas extraídos a la raíz de un repositorio GitHub (NO subas solo el ZIP).\n3. En vercel.com crea un proyecto, importa tu repositorio y usa Framework Preset: Other, sin Build Command.\n4. Abre la dirección pública que te proporcione Vercel.\n\nLos enlaces web de tus hotspots pueden abrir Facebook, Google Maps y otras páginas HTTPS/HTTP. Las imágenes personalizadas ya van dentro de la carpeta assets/.\n\nPara editar de nuevo: abre Navega360 Studio, pulsa Importar proyecto y selecciona ESTE MISMO ZIP original.\nEl audio inicia después de pulsar Reproducir, por las restricciones de los navegadores.\nLa librería de vistas panorámicas se carga desde cdn.jsdelivr.net.\n');
-  const out=await zip.generateAsync({type:'blob',compression:'STORE',streamFiles:true},info=>{btn.textContent=`Comprimiendo ${Math.round(info.percent)}%…`;});
-  const url=URL.createObjectURL(out),a=el('a',{href:url,download:`${slug(data.title)}-sitio-web.zip`});document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);notify('Sitio web exportado con tus hotspots e íconos personalizados.');
- }catch(err){console.error(err);notify('No se pudo exportar: '+err.message);}finally{btn.innerHTML=original;btn.disabled=false;}
+  const info='NAVEGA360 · PUBLICACIÓN PARA GITHUB Y VERCEL\n\n'+
+  '1. Descomprime este ZIP. NO subas el archivo ZIP completo a GitHub.\n'+
+  '2. Sube index.html, viewer.js, viewer.css, tour.json, vercel.json y la carpeta assets/ (con sus archivos) al repositorio.\n'+
+  '3. GitHub en navegador solo permite 25 MiB POR ARCHIVO; este exportador usa margen de 22 MiB.\n'+
+  '4. Si algún archivo no se puede reducir (por ejemplo música), reemplázalo con una versión más ligera y exporta de nuevo.\n'+
+  '5. En Vercel importa el repositorio con Framework Other y sin comando Build.\n'+
+  '6. Para seguir editando importa ESTE ZIP desde Navega360 Studio; conserva otra copia como respaldo.\n\n'+
+  'Archivos y tamaños (MiB):\n'+report.map(r=>`${asMiB(r.size).padStart(12)}   ${r.path}`).join('\n')+'\n\n'+
+  'Este ZIP contiene imágenes listas para publicación, que podrían haber perdido calidad respecto a tus originales.\n'+
+  'Los enlaces de hotspots y su ubicación se conservan. La música puede requerir permiso del visitante para reproducirse.\n';
+  zip.file('LEEME-PUBLICAR.txt',info);
+  btn.textContent='Creando ZIP…';
+  const out=await zip.generateAsync({type:'blob',compression:'STORE',streamFiles:true},info=>{btn.textContent=`Creando ZIP ${Math.round(info.percent)}%…`;});
+  const url=URL.createObjectURL(out),a=el('a',{href:url,download:`${slug(data.title)}-sitio-web-optimizado.zip`});
+  document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),45000);
+  resultNode.textContent=`✓ ZIP descargado. ${optimizedCount} fotografía(s) optimizada(s). Originales: ${asMiB(originalSize)} → fotografías publicadas y otros medios: ${asMiB(publishedSize)}. Máximo por archivo: 22 MiB. Descomprime antes de subir a GitHub.`;
+  notify('ZIP listo: descomprímelo antes de subir sus archivos a GitHub.');
+ }catch(err){console.error(err);resultNode.textContent='No se pudo exportar: '+err.message;notify('No se pudo exportar: '+err.message);}finally{btn.textContent=original;btn.disabled=false;}
 }
 async function importSite(file){
  if(!file)return;if(data.scenes.length&&!confirm('Se reemplazará el recorrido actual por el que hay dentro del ZIP. ¿Continuar?'))return;
@@ -158,9 +231,9 @@ function setup(){
  $('prevScene').onclick=()=>{const i=data.scenes.findIndex(s=>s.id===currentId);if(i>0)selectScene(data.scenes[i-1].id);};$('nextScene').onclick=()=>{const i=data.scenes.findIndex(s=>s.id===currentId);if(i<data.scenes.length-1)selectScene(data.scenes[i+1].id);};$('btnSaveView').onclick=()=>{const s=getCurrent();if(!s||!editorViewer||s.type!=='360')return;s.initialYaw=editorViewer.getYaw();s.initialPitch=editorViewer.getPitch();scheduleSave();notify('Orientación de entrada guardada.');};
  $('btnMusic').onclick=()=>$('musicInput').click();$('musicInput').onchange=async e=>{try{await setMusic(e.target.files[0]);}catch(err){notify('Error al guardar la música: '+err.message);}e.target.value='';};$('btnRemoveMusic').onclick=async()=>{const old=data.music?.assetId;data.music=null;stopAudio();await deleteAsset(old);$('musicName').textContent='Sin archivo de audio';$('btnRemoveMusic').classList.add('hidden');scheduleSave();notify('Música quitada.');};
  $('btnPreview').onclick=openPreview;$('btnClosePreview').onclick=closePreview;$('previewNext').onclick=()=>{if(previewIndex<data.scenes.length-1){previewIndex++;renderSurface('preview');}};$('previewPrev').onclick=()=>{if(previewIndex>0){previewIndex--;renderSurface('preview');}};$('previewMusic').onclick=toggleAudio;
- $('btnExport').onclick=exportSite;$('btnImport').onclick=()=>$('projectInput').click();$('projectInput').onchange=async e=>{await importSite(e.target.files[0]);e.target.value='';};
+ $('btnExport').onclick=showExportDialog;$('btnConfirmExport').onclick=exportSite;$('btnCloseExport').onclick=closeExportDialog;$('exportOptimize').onchange=e=>$('exportOptions').classList.toggle('hidden',!e.target.checked);$('exportModal').onclick=e=>{if(e.target.id==='exportModal')closeExportDialog();};$('btnImport').onclick=()=>$('projectInput').click();$('projectInput').onchange=async e=>{await importSite(e.target.files[0]);e.target.value='';};
  const help=()=>$('helpModal').classList.remove('hidden');$('btnHelp').onclick=help;$('btnCloseHelp').onclick=$('btnHelpOk').onclick=()=>$('helpModal').classList.add('hidden');$('helpModal').onclick=e=>{if(e.target.id==='helpModal')$('helpModal').classList.add('hidden');};
- document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('helpModal').classList.contains('hidden'))$('helpModal').classList.add('hidden');else if(previewVisible)closePreview();else if(activeTool){activeTool=null;updateToolUI();}}});window.addEventListener('resize',()=>{if(previewVisible){if(previewViewer)previewViewer.resize();}else if(editorViewer)editorViewer.resize();else if(getCurrent()?.type==='flat')renderSurface('editor');});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('helpModal').classList.contains('hidden'))$('helpModal').classList.add('hidden');else if(!$('exportModal').classList.contains('hidden'))closeExportDialog();else if(previewVisible)closePreview();else if(activeTool){activeTool=null;updateToolUI();}}});window.addEventListener('resize',()=>{if(previewVisible){if(previewViewer)previewViewer.resize();}else if(editorViewer)editorViewer.resize();else if(getCurrent()?.type==='flat')renderSurface('editor');});
 }
 setup();restore().catch(err=>{console.error(err);status('No hay guardado disponible. Exporta el ZIP periódicamente.');notify('No se pudo iniciar el almacenamiento local. Comprueba los permisos del navegador.');renderEverything();});
 })();
