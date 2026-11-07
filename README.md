@@ -7,8 +7,9 @@ Editor visual de recorridos virtuales 360°, listo para sitios estáticos en Git
 - Agregar muchas imágenes JPG, PNG o WEBP de una vez, o arrastrarlas al editor.
 - Detectar panorámicas equirectangulares aproximadamente 2:1. Al agregar una colección nueva, la **primera y la última imagen** se establecen como fotografía normal; su tipo se puede cambiar manualmente.
 - Cambiar el orden de las escenas y renombrarlas.
-- Colocar *hotspots* de enlace o información en panorámicas 360° y fotos normales. Para mover un punto, selecciónalo y pulsa **Reubicar en la imagen**; después haz clic en la ubicación deseada.
-- Asignar destinos entre las escenas.
+- Colocar *hotspots* de navegación entre escenas, enlaces a páginas externas (Facebook, Google Maps, etc.) o información en panorámicas 360° y fotos normales. Para mover un punto, selecciónalo y pulsa **Reubicar en la imagen**; después haz clic en la ubicación deseada.
+- Asignar destinos entre las escenas o pegar URL externas HTTPS/HTTP; opción de abrir en pestaña nueva.
+- Personalizar **cada hotspot** con tu propia imagen PNG, JPG, WEBP, GIF o AVIF (hasta 8 MB), ajustar el tamaño y volver al ícono original. Las imágenes se guardan en el navegador, viajan en el ZIP y se restauran al importarlo.
 - Guardar la orientación inicial de cada panorámica.
 - Música de fondo, en bucle, activada por el visitante (los navegadores impiden reproducir audio con sonido automáticamente antes de una interacción).
 - Vista previa de visitante, navegación anterior/siguiente y puntos interactivos.
@@ -21,7 +22,7 @@ Editor visual de recorridos virtuales 360°, listo para sitios estáticos en Git
 1. Descomprime `Navega360-Studio.zip`.
 2. Si tienes **Python 3** instalado, ejecuta `INICIAR-EN-WINDOWS.bat` y abre `http://localhost:8000`.
 3. Como alternativa, publica la carpeta del editor mediante GitHub y Vercel. Abre la dirección pública del editor. El navegador debe tener conexión a Internet para cargar **Pannellum** desde el CDN.
-4. **Subir fotografías** → organiza → **Enlace** o **Información** → clic en la fotografía para colocar el punto → configura el destino o la descripción a la derecha.
+4. **Subir fotografías** → organiza → **Escena**, **Sitio web** o **Información** → clic en la fotografía para colocar el punto → configura el destino o la descripción a la derecha.
 5. **Música de fondo** → sube el archivo de audio. **Vista previa** → prueba el recorrido.
 6. **Exportar sitio web** → descargará un ZIP que también sirve como **respaldo editable** del recorrido.
 
@@ -66,3 +67,13 @@ Editor visual de recorridos virtuales 360°, listo para sitios estáticos en Git
 
 - **Pannellum** © Matthew Petroff y colaboradores, licencia MIT, [pannellum.org](https://pannellum.org/).
 - **JSZip** © Stuart Knightley y colaboradores, licencia MIT/GPLv3; se distribuye con su archivo de licencia en `vendor/LICENCIA-JSZIP.md`.
+
+## Hotspots: URL e imágenes personalizadas
+
+1. Selecciona una escena normal o 360° y pulsa **Sitio web** para crear un hotspot que abra una página externa; después, haz clic sobre la imagen para situarlo.
+2. En **Propiedades** agrega el nombre y pega un enlace como `https://www.facebook.com/` o `https://maps.google.com/`. Por defecto se abrirá en una pestaña nueva.
+3. En **Imagen del hotspot** pulsa **Subir imagen** y selecciona un archivo PNG, JPG, WEBP, GIF o AVIF. Ajusta el tamaño con el control deslizante. Si no quieres la imagen, pulsa **Usar ícono original**.
+4. Puedes cambiar el **tipo de acción** de un punto ya creado: escena, sitio web o información.
+5. Usa **Vista previa** para probarlo y **Exportar sitio web** para llevarte imágenes y enlaces en el ZIP. Al importar ese ZIP, los íconos siguen siendo editables.
+
+**Seguridad:** se admiten únicamente direcciones HTTP o HTTPS. Los íconos SVG no se admiten, para evitar archivos activos. Los sitios externos pueden solicitar inicio de sesión o restringir la visualización en determinadas plataformas; el enlace se abre directamente en el navegador, no dentro del panorama.

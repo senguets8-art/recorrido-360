@@ -1,74 +1,27 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1526">
-  <title>Navega360 Studio · Editor de recorridos virtuales</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.css">
-  <link rel="stylesheet" href="./style.css">
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <meta name="theme-color" content="#091623">
+ <meta name="description" content="Recorrido virtual interactivo con panorámicas 360°">
+ <title>Recorrido virtual 360°</title>
+ <link rel="preconnect" href="https://cdn.jsdelivr.net">
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.css">
+ <link rel="stylesheet" href="./viewer.css">
 </head>
 <body>
-  <div class="app">
-    <header class="topbar">
-      <div class="brand"><div class="brand-symbol">✦</div><div><strong>Navega<span>360</span></strong><small>STUDIO</small></div></div>
-      <div class="project-name"><label for="tourTitle">Nombre del recorrido</label><input id="tourTitle" type="text" value="Mi recorrido virtual" maxlength="110" aria-label="Nombre del recorrido"></div>
-      <div class="top-actions">
-        <button class="btn subtle" id="btnImport" title="Importar un ZIP exportado anteriormente">↥ <span>Importar proyecto</span></button>
-        <button class="btn subtle" id="btnPreview">◉ <span>Vista previa</span></button>
-        <button class="btn primary" id="btnExport">↧ <span>Exportar sitio web</span></button>
-      </div>
-    </header>
-    <div class="workspace">
-      <aside class="panel panel-left">
-        <div class="section-title"><div><small>ORGANIZA TU TOUR</small><h2>Escenas <span id="sceneCount" class="count">0</span></h2></div></div>
-        <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Agregar fotografías"><span class="drop-icon">＋</span><strong>Subir fotografías</strong><small>Arrastra archivos aquí o haz clic</small><small class="muted">JPG, PNG, WEBP · varias a la vez</small></div>
-        <div class="scene-list" id="sceneList"></div>
-        <div class="sidebar-help"><span class="help-icon">ⓘ</span><p>La primera y última imagen pueden ser <b>normales</b>; las intermedias, <b>360°</b>. Puedes cambiar el tipo de cada escena.</p></div>
-        <div class="music-card">
-          <div class="music-head"><div><small>AMBIENTE</small><h3>♫ Música de fondo</h3></div></div>
-          <div class="music-name" id="musicName">Sin archivo de audio</div>
-          <div class="music-actions"><button class="btn compact" id="btnMusic">Subir audio</button><button class="btn compact danger-text hidden" id="btnRemoveMusic" title="Quitar música">Quitar</button></div>
-          <small class="muted">MP3, WAV, OGG o M4A. El visitante iniciará la música con un clic.</small>
-        </div>
-      </aside>
-      <main class="main-area">
-        <div class="viewer-toolbar"><div class="scene-breadcrumb"><span class="dot"></span><span id="currentLabel">Sin escena seleccionada</span><span id="currentTypeBadge" class="type-badge"></span></div><div class="viewer-tools"><button class="tool-btn" id="btnNewNav" title="Agregar un punto que lleve a otra escena">⊕ <span>Enlace</span></button><button class="tool-btn" id="btnNewInfo" title="Agregar un punto de información">ⓘ <span>Información</span></button><button class="tool-btn" id="btnMoveSpot" title="Cambiar la posición de un punto seleccionado">⌖ <span>Mover punto</span></button></div></div>
-        <section class="stage-wrap"><div id="stage" class="stage"><div id="emptyState" class="empty-state"><div class="empty-globe">◉</div><h1>Tu recorrido comienza aquí</h1><p>Sube tus imágenes y conecta cada espacio mediante puntos interactivos.</p><button class="btn primary" id="btnEmptyUpload">＋ Agregar imágenes</button></div></div><div id="stageHint" class="stage-hint hidden"></div><div class="stage-caption" id="stageCaption">NAVEGA360 · EDITOR DE RECORRIDOS</div></section>
-        <div class="bottom-bar"><div class="bottom-nav"><button class="btn ghost" id="prevScene">← Anterior</button><span id="positionLabel">0 / 0</span><button class="btn ghost" id="nextScene">Siguiente →</button></div><div class="bottom-tip">Haz clic en <b>Enlace</b> o <b>Información</b> y después selecciona un lugar en la foto.</div><button class="btn ghost" id="btnSaveView" title="Guardar hacia dónde apunta inicialmente una panorámica">◉ Guardar orientación</button></div>
-      </main>
-      <aside class="panel panel-right">
-        <div class="section-title"><div><small>PERSONALIZA</small><h2>Propiedades</h2></div></div>
-        <div id="noSelection" class="properties-placeholder"><div class="prop-illustration">⌘</div><strong>Selecciona una escena</strong><p>Configura su título, tipo de imagen y puntos interactivos.</p></div>
-        <div id="sceneProperties" class="hidden">
-          <div class="field"><label for="sceneTitle">Nombre de la escena</label><input id="sceneTitle" placeholder="Ej. Entrada principal" maxlength="90"></div>
-          <div class="field"><label for="sceneType">Tipo de fotografía</label><select id="sceneType"><option value="flat">Fotografía normal</option><option value="360">Panorama 360°</option></select></div>
-          <div class="field"><label>Archivo cargado</label><div id="sceneFilename" class="filename"></div></div>
-          <div class="property-divider"></div>
-          <div class="prop-title"><strong>Puntos interactivos</strong><span class="count" id="spotCount">0</span></div>
-          <div id="spotList" class="spot-list"></div>
-          <div id="hotspotEditor" class="hotspot-editor hidden"><div class="editor-head"><strong id="spotHeading">Editar hotspot</strong><button class="mini-icon" id="btnDeleteSpot" title="Eliminar punto">✕</button></div>
-            <div class="field"><label for="spotLabel">Texto visible</label><input id="spotLabel" maxlength="100" placeholder="Ej. Ir al auditorio"></div>
-            <div class="field" id="destinationField"><label for="spotDestination">Llevar a la escena</label><select id="spotDestination"></select></div>
-            <div class="field hidden" id="infoField"><label for="spotInfo">Descripción</label><textarea id="spotInfo" rows="4" maxlength="1000" placeholder="Información para el visitante"></textarea></div>
-            <div class="coords" id="spotCoords"></div>
-            <button class="btn light block" id="btnReposition">⌖ Reubicar en la imagen</button>
-          </div>
-          <div class="property-divider"></div><button class="btn danger block" id="btnDeleteScene">Eliminar esta escena</button>
-        </div>
-        <div class="right-footer"><b>Guardado local automático</b><p id="saveStatus">Preparando tu espacio de trabajo…</p><button class="link-button" id="btnHelp">¿Cómo se publica el recorrido?</button></div>
-      </aside>
-    </div>
-  </div>
-  <div id="preview" class="preview hidden" aria-hidden="true"><div class="preview-top"><div class="preview-brand">✦ Navega<span>360</span> <small>VISTA DEL VISITANTE</small></div><button class="btn subtle" id="btnClosePreview">✕ Volver al editor</button></div><div id="previewStage" class="preview-stage"></div><div class="preview-bottom"><button id="previewPrev" class="btn translucent">← Anterior</button><div><strong id="previewTitle"></strong><small id="previewPosition"></small></div><div class="preview-actions"><button id="previewMusic" class="btn translucent">♫ Música</button><button id="previewNext" class="btn translucent">Siguiente →</button></div></div></div>
-  <div id="helpModal" class="modal-backdrop hidden"><div class="modal"><button class="modal-close" id="btnCloseHelp">✕</button><span class="eyebrow">PUBLICAR EN INTERNET</span><h2>De tu computadora a un recorrido compartible</h2><p>El botón <b>Exportar sitio web</b> genera un ZIP con el recorrido terminado, fotografías, audio y puntos interactivos.</p><ol><li>Descomprime el ZIP en tu computadora.</li><li>En <b>GitHub</b>, crea un repositorio nuevo y sube <b>todos los archivos descomprimidos</b> (no el ZIP).</li><li>En <b>Vercel</b>, selecciona <b>Add New → Project</b>, importa el repositorio y publícalo como sitio estático (Framework: Other; sin comando de compilación).</li><li>Comparte el enlace que te dé Vercel. Para realizar cambios, importa el ZIP de vuelta a este editor, modifícalo y exporta nuevamente.</li></ol><p class="modal-note">El proyecto se guarda en el navegador de este dispositivo. Conserva también tu ZIP como respaldo. No se suben tus fotos a ningún servidor al editarlas.</p><button class="btn primary" id="btnHelpOk">Entendido</button></div></div>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp,image/avif" multiple hidden>
-  <input type="file" id="musicInput" accept="audio/*,.mp3,.m4a,.ogg,.wav" hidden>
-  <input type="file" id="projectInput" accept=".zip,application/zip" hidden>
-  <script src="./vendor/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.js"></script>
-  <script src="./app.js" defer></script>
+ <main class="tour-shell">
+  <header class="tour-header"><div class="brand-icon">✦</div><div class="tour-heading"><small>RECORRIDO VIRTUAL INTERACTIVO</small><strong id="tourName">Recorrido 360°</strong></div><div class="header-right"><button class="icon-button" id="sceneListToggle" aria-label="Abrir menú de escenas" title="Ver escenas">☷ <span>Escenas</span></button><button class="icon-button" id="fullScreen" aria-label="Pantalla completa" title="Pantalla completa">⛶</button></div></header>
+  <section class="photo-stage" id="photoStage"><div class="loading"><div class="loading-mark">✦</div><h1>Preparando recorrido virtual</h1><p>El espacio está a un clic de distancia.</p></div></section>
+  <div class="instructions" id="instructions">Arrastra para mirar alrededor · Usa los puntos luminosos para avanzar</div>
+  <nav class="scene-panel" id="scenePanel" aria-label="Lista de escenas"><div class="panel-top"><strong>Explorar espacios</strong><button id="closePanel" class="close-panel" aria-label="Cerrar escenas">✕</button></div><div id="sceneButtons" class="scene-buttons"></div></nav>
+  <footer class="tour-footer"><button class="nav-arrow" id="goBack" aria-label="Escena anterior">←</button><div class="tour-current"><strong id="currentName">Cargando…</strong><span id="currentNumber"></span></div><div class="footer-tools"><button id="musicButton" class="music-button hidden" title="Reproducir o pausar música">♫ <span>Escuchar música</span></button><button class="nav-arrow" id="goNext" aria-label="Escena siguiente">→</button></div></footer>
+  <div class="tour-credit">Creado con Navega360 Studio</div>
+ </main>
+ <div id="infoOverlay" class="info-overlay hidden"><div class="info-card"><button id="closeInfo" class="info-close" aria-label="Cerrar">✕</button><small>DESCUBRE MÁS</small><h2 id="infoTitle"></h2><p id="infoText"></p><button id="infoOkay" class="info-okay">Continuar explorando</button></div></div>
+ <audio id="backgroundAudio" loop preload="none"></audio>
+ <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.js"></script>
+ <script src="./viewer.js" defer></script>
 </body>
 </html>

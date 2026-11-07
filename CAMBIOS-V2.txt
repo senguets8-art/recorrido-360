@@ -1,0 +1,19 @@
+NAVEGA360 STUDIO · ACTUALIZACIÓN V2 · HOTSPOTS WEB E ÍCONOS
+
+NOVEDADES
+- Nuevo botón «Sitio web» en la barra de herramientas.
+- Cada hotspot puede abrir otra escena, mostrar información o abrir una URL externa HTTP/HTTPS.
+- Abrir enlaces en una pestaña nueva, por defecto, o en la misma pestaña.
+- Imagen personalizada por hotspot: PNG, JPG, WEBP, GIF o AVIF, máximo 8 MB.
+- Control de tamaño del ícono de 28 a 110 px y opción para restaurar el predeterminado.
+- Exportación e importación conserva tanto la URL como la imagen personalizada.
+
+ACTUALIZAR EN GITHUB + VERCEL
+1. Conserva tu ZIP de recorridos anterior como respaldo.
+2. Descomprime este paquete y sustituye en tu repositorio del EDITOR los archivos anteriores por estos archivos actualizados.
+3. Vercel publicará la nueva versión al detectar el commit de GitHub.
+4. Abre el editor con la misma dirección web: sigue usando el almacenamiento local del navegador como antes.
+5. Abre tu recorrido existente o importa el ZIP que exportaste, agrega el enlace y el ícono, y pulsa «Exportar sitio web».
+6. Publica los archivos del nuevo ZIP del RECORRIDO en el repositorio de su sitio público para actualizar el recorrido publicado.
+
+NOTA: Los hotspots externos abren el navegador del visitante; no incrustan Facebook ni Google Maps dentro del panorama.
