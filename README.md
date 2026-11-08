@@ -88,7 +88,7 @@ Conserva el mismo navegador y los datos del sitio para mantener el proyecto edit
 - Los recorridos se guardan como manifiestos JSON con nombre de archivo nuevo cada publicación para evitar servir una versión anterior por caché. En cada visita se consulta el manifiesto más reciente del recorrido, lo que implica una operación de listado de Blob; es adecuado para proyectos pequeños, pero para tráfico alto convendría una base de datos o un índice de publicaciones.
 - Si publicas con el mismo identificador desde otro navegador se reemplaza la **versión más reciente** visible, no las fotos originales. Los medios anteriores no se borran automáticamente; revisa Storage periódicamente.
 - Los enlaces externos de hotspots admiten HTTP y HTTPS; el visor no ejecuta código de los enlaces.
-- La música depende de la interacción del visitante; los navegadores suelen bloquear sonido automático.
+- La música intenta reproducirse al abrir el visor (volumen 55%) y se repite **en bucle continuo**, incluso al cambiar de escena. Algunos navegadores bloquean sonido automático: en ese caso, aparece el botón «Activar música» y también se vuelve a intentar en la primera interacción del visitante. No existe una forma legítima de forzar audio con sonido sin interacción en todos los navegadores.
 - Pannellum 2.5.7 se carga desde el CDN de jsDelivr, requiere Internet.
 - Usa música propia o con licencia apropiada para publicación.
 
@@ -112,3 +112,13 @@ Conserva el mismo navegador y los datos del sitio para mantener el proyecto edit
 - [Firmar direcciones Blob](https://vercel.com/changelog/signed-urls-are-now-available-for-vercel-blob)
 - [Seguridad de Blob](https://vercel.com/docs/vercel-blob/security)
 - [Consumo y costos](https://vercel.com/docs/vercel-blob/usage-and-pricing)
+
+## Navega360 V4.3 — Música ambiental automática y en bucle
+
+- Al entrar al **visor público**, se intenta iniciar inmediatamente la música de fondo, con `loop` activado.
+- El audio **no se reinicia al cambiar de escena** y vuelve a comenzar al terminar la pista.
+- Si el navegador impide la reproducción automática con sonido, el visitante verá un aviso discreto para **activar música** y también se intentará al primer toque/clic sobre el recorrido.
+- El visitante conserva el control para **pausar o reanudar** la música. Pausarla voluntariamente impide el reinicio automático en otros clics.
+- En **Vista previa** del editor la música también se inicia al abrir la vista y sigue en bucle hasta cerrarla o pausarla.
+- No se modificaron la conexión con Vercel Blob, la contraseña de publicación ni las fotografías/hotspots. Si Blob continúa fallando, esta mejora musical no corregirá ese error por sí sola.
+- Vuelve a publicar el recorrido cuando el almacenamiento esté funcionando para que los visitantes escuchen la música con esta funcionalidad.

@@ -69,10 +69,29 @@ function renderSurface(kind,preserve=false){const preview=kind==='preview',root=
  }
  if(preview){$('previewTitle').textContent=scene.title;$('previewPosition').textContent=`Escena ${previewIndex+1} de ${data.scenes.length}`;$('previewPrev').disabled=previewIndex===0;$('previewNext').disabled=previewIndex===data.scenes.length-1;}
 }
-async function setMusic(file){if(!file)return;if(!(file.type.startsWith('audio/')||/\.(mp3|wav|ogg|m4a)$/i.test(file.name))){notify('Selecciona un archivo de audio compatible.');return;}const old=data.music?.assetId,id=uid();await saveAsset(id,file,file.name);data.music={assetId:id,name:file.name};if(old)await deleteAsset(old);$('musicName').textContent=file.name;$('btnRemoveMusic').classList.remove('hidden');scheduleSave();notify('Música añadida. El visitante la podrá activar manualmente.');}
-function stopAudio(){if(audio){audio.pause();audio.src='';audio=null;}}
-function toggleAudio(){const music=data.music;if(!music){notify('No hay música cargada.');return;}if(!audio){audio=new Audio(imageURL(music.assetId));audio.loop=true;audio.volume=.55;}if(audio.paused){audio.play().then(()=>{$('previewMusic').textContent='♫ Pausar música';}).catch(()=>notify('El navegador no permitió reproducir este audio.'));}else{audio.pause();$('previewMusic').textContent='♫ Reproducir música';}}
-function openPreview(){if(!data.scenes.length){notify('Primero agrega fotografías.');return;}previewVisible=true;previewIndex=Math.max(0,data.scenes.findIndex(s=>s.id===currentId));destroyViewer('editor');$('preview').classList.remove('hidden');$('preview').setAttribute('aria-hidden','false');$('previewMusic').classList.toggle('hidden',!data.music);$('previewMusic').textContent='♫ Reproducir música';renderSurface('preview');}
+async function setMusic(file){if(!file)return;if(!(file.type.startsWith('audio/')||/\.(mp3|wav|ogg|m4a)$/i.test(file.name))){notify('Selecciona un archivo de audio compatible.');return;}const old=data.music?.assetId,id=uid();await saveAsset(id,file,file.name);data.music={assetId:id,name:file.name};if(old)await deleteAsset(old);$('musicName').textContent=file.name;$('btnRemoveMusic').classList.remove('hidden');scheduleSave();notify('Música añadida: el visor intentará reproducirla automáticamente y en bucle.');}
+function stopAudio(){if(audio){audio.pause();audio.removeAttribute('src');audio.load();audio=null;}}
+function startPreviewMusic(){
+ const music=data.music;if(!music||!previewVisible)return;
+ if(!audio){audio=new Audio(imageURL(music.assetId));audio.loop=true;audio.volume=.55;}
+ if(!audio.paused)return;
+ let attempt;
+ try{attempt=audio.play();}catch(e){$('previewMusic').textContent='♫ Activar música';return;}
+ if(attempt?.then)attempt.then(()=>{$('previewMusic').textContent='♫ Pausar música';}).catch(()=>{$('previewMusic').textContent='♫ Activar música';});
+}
+function toggleAudio(){
+ if(!data.music){notify('No hay música cargada.');return;}
+ if(audio&&!audio.paused){audio.pause();$('previewMusic').textContent='♫ Reproducir música';}
+ else startPreviewMusic();
+}
+function openPreview(){
+ if(!data.scenes.length){notify('Primero agrega fotografías.');return;}
+ previewVisible=true;previewIndex=Math.max(0,data.scenes.findIndex(s=>s.id===currentId));destroyViewer('editor');
+ $('preview').classList.remove('hidden');$('preview').setAttribute('aria-hidden','false');
+ $('previewMusic').classList.toggle('hidden',!data.music);$('previewMusic').textContent='♫ Reproducir música';
+ // Esta función se ejecuta al pulsar Vista previa, gesto que suele autorizar el audio.
+ startPreviewMusic();renderSurface('preview');
+}
 function closePreview(){previewVisible=false;stopAudio();$('preview').classList.add('hidden');$('preview').setAttribute('aria-hidden','true');$('preview').querySelectorAll('.visitor-overlay').forEach(e=>e.remove());destroyViewer('preview');renderSurface('editor');}
 const WEB_FILE_LIMIT = 22 * 1024 * 1024; // Margen de seguridad bajo el límite GitHub web de 25 MiB.
 function asMiB(bytes){return (bytes/(1024*1024)).toFixed(2)+' MiB';}
@@ -172,7 +191,7 @@ async function exportSite(){
   '6. Para seguir editando importa ESTE ZIP desde Navega360 Studio; conserva otra copia como respaldo.\n\n'+
   'Archivos y tamaños (MiB):\n'+report.map(r=>`${asMiB(r.size).padStart(12)}   ${r.path}`).join('\n')+'\n\n'+
   'Este ZIP contiene imágenes listas para publicación, que podrían haber perdido calidad respecto a tus originales.\n'+
-  'Los enlaces de hotspots y su ubicación se conservan. La música puede requerir permiso del visitante para reproducirse.\n';
+  'Los enlaces de hotspots y su ubicación se conservan. La música se intenta reproducir al abrir el recorrido y se repite en bucle; algunos navegadores exigirán un toque o clic.\n';
   zip.file('LEEME-PUBLICAR.txt',info);
   btn.textContent='Creando ZIP…';
   const out=await zip.generateAsync({type:'blob',compression:'STORE',streamFiles:true},info=>{btn.textContent=`Creando ZIP ${Math.round(info.percent)}%…`;});

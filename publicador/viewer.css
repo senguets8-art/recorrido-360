@@ -3,3 +3,8 @@
 
 /* Hotspots externos y personalizados: las imágenes viajan en la carpeta assets */
 .tour-hotspot.is-web,.spot-circle.is-web{background:#7456c8!important}.tour-hotspot.custom-image,.spot-circle.custom-image{width:var(--spot-size,46px)!important;height:var(--spot-size,46px)!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}.tour-hotspot:not(.custom-image),.spot-circle:not(.custom-image){width:var(--spot-size,46px)!important;height:var(--spot-size,46px)!important}.hotspot-custom-icon{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;max-width:none!important;max-height:none!important;filter:drop-shadow(0 5px 6px #000a);pointer-events:none}
+
+/* Aviso no invasivo cuando el navegador bloquea audio automático */
+.music-prompt{position:absolute;z-index:19;left:50%;bottom:110px;transform:translateX(-50%);width:min(480px,calc(100% - 28px));display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 15px;border-radius:15px;background:#102c45ed;box-shadow:0 10px 35px #0007;border:1px solid #67b5df80;backdrop-filter:blur(13px);color:#fff}
+.music-prompt div{min-width:0}.music-prompt strong{display:block;font-size:12px;margin-bottom:4px}.music-prompt span{display:block;font-size:11px;line-height:1.35;color:#d0e6f8}.music-prompt button{flex:none;background:#1479c8;padding:10px 13px;border-radius:9px;font-size:12px;font-weight:800}.music-prompt button:hover{background:#2892e4}
+@media(max-width:650px){.music-prompt{bottom:85px;flex-direction:column;text-align:center;padding:12px}.music-prompt button{width:100%}}

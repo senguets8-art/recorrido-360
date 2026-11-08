@@ -30,7 +30,7 @@
           <div class="music-head"><div><small>AMBIENTE</small><h3>♫ Música de fondo</h3></div></div>
           <div class="music-name" id="musicName">Sin archivo de audio</div>
           <div class="music-actions"><button class="btn compact" id="btnMusic">Subir audio</button><button class="btn compact danger-text hidden" id="btnRemoveMusic" title="Quitar música">Quitar</button></div>
-          <small class="muted">MP3, WAV, OGG o M4A. El visitante iniciará la música con un clic.</small>
+          <small class="muted">MP3, WAV, OGG o M4A. Inicio automático cuando el navegador lo permita, reproducción continua en bucle y botón para activar o pausar.</small>
         </div>
       </aside>
       <main class="main-area">
@@ -94,7 +94,7 @@
     <div class="cloud-actions"><button id="cloudCheckStorage" class="btn compact" type="button">🔎 Comprobar conexión con Blob</button></div>
     <button id="cloudPublish" class="btn primary block">☁ Guardar y actualizar recorrido en línea</button>
     <div id="cloudResult" class="hidden"><div class="field"><label for="cloudLink">Enlace de visualización confirmado (solo lectura)</label><input id="cloudLink" readonly></div><div class="cloud-actions"><button class="btn compact" id="cloudCopy">Copiar enlace</button><a class="btn compact" id="cloudVisit" target="_blank" rel="noopener noreferrer">Abrir como visitante</a></div></div>
-    <p class="modal-note">Las modificaciones locales no se ven en el enlace hasta pulsar <b>Guardar y actualizar</b>. El audio se inicia cuando el visitante lo autoriza. El enlace es público para cualquier persona que lo tenga.</p>
+    <p class="modal-note">Las modificaciones locales no se ven en el enlace hasta pulsar <b>Guardar y actualizar</b>. La música se reproduce automáticamente cuando el navegador lo permite, y permanece en bucle; algunos dispositivos exigirán el primer toque. El enlace es público para cualquier persona que lo tenga.</p>
   </div></div>
   <div id="cloudLoadModal" class="modal-backdrop hidden"><div class="modal cloud-modal"><button class="modal-close" id="cloudLoadClose">✕</button><span class="eyebrow">RECUPERAR DESDE LA NUBE</span><h2>Abrir un recorrido publicado para editarlo</h2><p>Pega el enlace de visualización o el identificador del recorrido. Se restaurarán las escenas y hotspots en este navegador.</p><div class="field"><label for="cloudLoadInput">Enlace público o identificador</label><input id="cloudLoadInput" placeholder="https://mi-sitio.vercel.app/ver/..." autocomplete="off"></div><div id="cloudLoadStatus" role="status"></div><button class="btn primary block" id="cloudLoadAction">Cargar recorrido publicado</button></div></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
