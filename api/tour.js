@@ -16,5 +16,5 @@ export default async function handler(req,res){
   if(!response.ok)throw new Error('No se pudo leer el manifiesto.');
   const document=await response.json();
   res.setHeader('Cache-Control','no-store');return json(res,200,document);
- }catch(e){return failure(res,e);}
+ }catch(e){return failure(res,e,'lectura del recorrido');}
 }

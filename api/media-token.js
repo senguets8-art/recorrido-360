@@ -13,5 +13,5 @@ export default async function handler(req,res){
   const token=await issueSignedToken({pathname,operations:['put'],validUntil:until,allowedContentTypes:[filetype],maximumSizeInBytes:bytes});
   const {presignedUrl}=await presignUrl(token,{pathname,operation:'put',validUntil:until,access:'public',contentType:filetype});
   return json(res,200,{presignedUrl});
- }catch(e){return failure(res,e);}
+ }catch(e){return failure(res,e,'creación del enlace de subida');}
 }

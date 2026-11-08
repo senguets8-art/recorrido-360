@@ -1,4 +1,37 @@
-# Navega360 Studio V4.1 · Corrección del error 404
+# Navega360 Studio V4.2 · Diagnóstico de Vercel Blob
+
+Esta actualización **no cambia la forma de almacenar el proyecto local ni los hotspots**. Corrige mensajes de error genéricos, agrega una prueba de conexión para saber si Vercel Blob admite lectura, escritura y generación de enlaces temporales, y actualiza las instrucciones de ayuda.
+
+## Primeros pasos ante "No se pudo completar la operación en Vercel Blob"
+
+1. En el **mismo proyecto** de Vercel que aloja Navega360, abre **Storage** y comprueba que exista un almacenamiento **Blob con acceso Public**, conectado al proyecto.
+2. Para conexiones tradicionales comprueba que Vercel haya creado `BLOB_READ_WRITE_TOKEN` en **Settings → Environment Variables** para **Production**. Las conexiones recientes pueden usar autenticación **OIDC** sin mostrar ese token; no intentes inventar uno ni mostrarlo públicamente.
+3. Comprueba que exista la variable `NAVEGA_ADMIN_PASSWORD` para Production con al menos 16 caracteres. Nunca compartas su valor ni lo escribas en GitHub.
+4. Tras conectar almacenamiento o modificar variables, usa **Deployments → Redeploy** del proyecto en producción.
+5. Vuelve a Navega360 y abre **☁ Publicar enlace**. Introduce tu contraseña y pulsa **🔎 Comprobar conexión con Blob**. El diagnóstico verificará: lectura, escritura de un pequeño archivo temporal, generación de URL para subir fotos y limpieza. Cada prueba puede consumir pequeñas operaciones de Blob.
+6. Si la prueba sale bien, pulsa **Guardar y actualizar recorrido en línea**. Si falla, copia **solo el mensaje de error** (sin credenciales) o consulta **Project → Logs** en Vercel filtrando `api/storage-check`, `api/media-token`, `api/media-url` o `api/publish`.
+
+**La comprobación NO asegura que todos los archivos grandes puedan subirse**: el navegador o Blob pueden rechazar una foto específica por tamaño, formato, conexión o CORS. En ese caso Navega360 señalará qué foto y paso fallaron.
+
+## Actualización
+
+Descomprime el ZIP y sustituye el código anterior en GitHub manteniendo `index.html`, `vercel.json`, `package.json`, `api/`, `lib/`, `publicador/`, `vendor/`, `app.js`, `cloud.js`, `style.css` en la raíz del proyecto. Asegúrate de subir también el archivo **nuevo** `api/storage-check.js`. No subas tus fotos a GitHub. Espera el despliegue **Ready** antes de probar.
+
+Conserva tu **mismo dominio y navegador** si quieres recuperar el proyecto local; los datos IndexedDB no se borran al reemplazar el código. No limpies los datos del sitio y conserva las fotos originales como respaldo. Usa un dominio con HTTPS. Vercel Blob público permite a cualquiera con el enlace directo descargar los archivos; para materiales confidenciales utiliza otra arquitectura.
+
+## Visor público de solo lectura
+
+`https://TU-SITIO.vercel.app/publicador/index.html?tour=TU-ID`
+
+Solo muestra el recorrido publicado. No muestra herramientas de edición. Los enlaces a redes sociales, Maps y los iconos personalizados se conservan.
+
+## Referencias oficiales
+
+- https://vercel.com/docs/vercel-blob/public-storage
+- https://vercel.com/docs/logs/runtime
+- https://vercel.com/changelog/vercel-blob-now-supports-oidc-authentication
+
+---
 
 ## ¿Qué cambia respecto a V3?
 

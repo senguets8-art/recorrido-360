@@ -16,7 +16,7 @@ function status(message){$('cloudStatus').textContent=message;}
 function safeShow(target,show){$(target).classList.toggle('hidden',!show);}
 function openPublish(){const id=code();$('cloudCode').value=id;safeShow('cloudModal',true);$('cloudModal').setAttribute('aria-hidden','false');safeShow('cloudResult',false);$('cloudLink').value='';$('cloudVisit').removeAttribute('href');status('Pulsa «Guardar y actualizar» para subir o actualizar el recorrido. El enlace para visitantes solo aparecerá cuando Vercel confirme la publicación.');}
 function closePublish(){if(busy)return;safeShow('cloudModal',false);$('cloudModal').setAttribute('aria-hidden','true');$('cloudPassword').value='';}
-async function api(endpoint,body,password){const response=await fetch('/api/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json','x-navega-password':password},body:JSON.stringify(body)});const json=await response.json().catch(()=>({error:'Respuesta inesperada del servidor.'}));if(!response.ok)throw new Error(json.error||'No se pudo conectar con Vercel.');return json;}
+async function api(endpoint,body,password){const response=await fetch('/api/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json','x-navega-password':password},body:JSON.stringify(body)});const json=await response.json().catch(()=>({error:'Respuesta inesperada del servidor.'}));if(!response.ok){let extra='';if(json.details?.message)extra=' Detalle: '+json.details.message;if(json.step)extra=' ['+json.step+']'+extra;throw new Error((json.error||'No se pudo conectar con Vercel.')+extra);}return json;}
 function extFor(blob,name){
  const mime=blob?.type||'';const types={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif','image/avif':'avif','audio/mpeg':'mp3','audio/mp4':'m4a','audio/x-m4a':'m4a','audio/ogg':'ogg','audio/wav':'wav','audio/x-wav':'wav','audio/aac':'aac'};
  if(types[mime])return types[mime];
@@ -32,7 +32,7 @@ async function uploadMedia(id,tourId,password,progress){
  const canonicalMime={'jpg':'image/jpeg','jpeg':'image/jpeg','png':'image/png','webp':'image/webp','gif':'image/gif','avif':'image/avif','mp3':'audio/mpeg','m4a':'audio/mp4','ogg':'audio/ogg','wav':'audio/wav','aac':'audio/aac'};
  const mime=(blob.type==='audio/x-m4a'||blob.type==='audio/x-wav')?blob.type:canonicalMime[ext];
  if(!mime)throw new Error('Este archivo no tiene un tipo MIME reconocible: '+record.name);
- const token=await api('media-token',{pathname,mime,size:blob.size},password);
+ let token;try{token=await api('media-token',{pathname,mime,size:blob.size},password);}catch(error){throw new Error('No se pudo preparar la subida de «'+record.name+'»: '+error.message);}
  progress('Subiendo '+record.name+' ('+(blob.size/1048576).toFixed(1)+' MiB)…');
  const sent=await fetch(token.presignedUrl,{method:'PUT',headers:{'Content-Type':mime},body:blob});
  if(!sent.ok){let body='';try{body=(await sent.text()).slice(0,250);}catch{}throw new Error('La nube rechazó el archivo «'+record.name+'» (HTTP '+sent.status+'). '+body);}
@@ -42,6 +42,20 @@ async function uploadMedia(id,tourId,password,progress){
  }
  await hooks.markRemoteAsset(id,result.url);
  return result.url;
+}
+async function checkStorage(){
+ if(busy)return;
+ const password=$('cloudPassword').value;
+ if(!password){status('Escribe primero la contraseña privada de publicación.');return;}
+ const btn=$('cloudCheckStorage'),publishBtn=$('cloudPublish');busy=true;btn.disabled=true;publishBtn.disabled=true;
+ status('Comprobando lectura y escritura en Vercel Blob…');
+ try{
+  const response=await api('storage-check',{},password);
+  status('✓ '+response.message+'\nYa puedes intentar publicar tus escenas.');
+ }catch(error){
+  console.error('[Navega360 diagnóstico]',error);
+  status('❌ '+error.message+'\nSi el error continúa, abre Vercel → tu proyecto → Logs. No compartas contraseñas ni tokens.');
+ }finally{busy=false;btn.disabled=false;publishBtn.disabled=false;}
 }
 async function publish(){
  if(busy)return;const password=$('cloudPassword').value;const data=hooks.getData();
@@ -59,7 +73,7 @@ async function publish(){
   }
   status('Guardando escenas, hotspots y enlaces…');
   const manifest={title:data.title,scenes:data.scenes.map(s=>({id:s.id,title:s.title,type:s.type,path:urls.get(s.assetId),initialYaw:s.initialYaw||0,initialPitch:s.initialPitch||0,hotspots:(s.hotspots||[]).map(h=>({id:h.id,kind:h.kind,label:h.label,body:h.body,target:h.target,url:h.url,newTab:h.newTab,iconSize:h.iconSize,iconPath:h.iconAssetId?urls.get(h.iconAssetId):null,x:h.x,y:h.y,pitch:h.pitch,yaw:h.yaw}))})),music:data.music?{path:urls.get(data.music.assetId),name:data.music.name}:null};
-  await api('publish',{id,tour:manifest},password);
+  try{await api('publish',{id,tour:manifest},password);}catch(error){throw new Error('No se pudieron guardar las escenas del recorrido: '+error.message);}
   hooks.setCloudId(id);await hooks.saveNow();
   const link=visitUrl(id);$('cloudLink').value=link;$('cloudVisit').href=link;safeShow('cloudResult',true);
   status('✓ Recorrido publicado.\nComparte el enlace de visualización. Las personas que lo abran no podrán modificar las escenas desde ese visor.');
@@ -81,6 +95,7 @@ $('btnCloud').addEventListener('click',openPublish);
 $('cloudClose').addEventListener('click',closePublish);
 $('cloudModal').addEventListener('click',e=>{if(e.target===$('cloudModal'))closePublish();});
 $('cloudPublish').addEventListener('click',publish);
+$('cloudCheckStorage').addEventListener('click',checkStorage);
 $('cloudCopy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('cloudLink').value);hooks.notify('Enlace copiado.');}catch{ $('cloudLink').select();document.execCommand('copy');hooks.notify('Enlace seleccionado para copiar.');}});
 $('btnCloudOpen').addEventListener('click',()=>safeShow('cloudLoadModal',true));
 $('cloudLoadClose').addEventListener('click',()=>safeShow('cloudLoadModal',false));
